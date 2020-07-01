@@ -30,15 +30,17 @@ const createPofmaTag = () => {
 const findStartingNode = (thisNode: Node, endNode: Node): Node | null => {
   const { parentNode, previousSibling, nodeType, textContent } = thisNode;
 
+  console.log("Finding starting node", thisNode)
+
   if (!thisNode) return null;
 
-  if (nodeType === Node.TEXT_NODE && textContent.match(/CORRECTION NOTICE/i)) {
+  if (textContent && textContent.match(/CORRECTION NOTICE/i)) {
     let range = document.createRange();
     range.setStartBefore(thisNode);
     range.setEndAfter(endNode);
     const match = CORRECTION_NOTICE_MATCH.exec(range.toString());
     if (match) {
-      const offset = /CORRECTION NOTICE.*?$/i.exec(textContent);
+      const offset = /(CORRECTION NOTICE)(?!.*\1).*/i.exec(textContent);
       thisNode.parentNode.insertBefore(
         document.createTextNode(textContent.substring(0, offset.index)),
         thisNode
