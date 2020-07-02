@@ -1,8 +1,8 @@
 let ENABLED = true;
 let REPLACE_TEXT = "POFMA";
 
-const CORRECTION_NOTICE_MATCH = /(“|")?CORRECTION NOTICE:?\s*This.{1,50}?contains.{1,50}?false.{1,50}?statements?.*?correct facts/gi;
-const CORRECTION_NOTICE_REPLACE = /(“|")?CORRECTION NOTICE:?\s*This.{1,50}?contains.{1,50}?false.{1,50}?statements?.*?correct facts.{1,100}\[FACTUALLY_LINK\]\s*\.?\s*("|”)?/gi;
+const CORRECTION_NOTICE_MATCH = /(“|")?CORRECTION NOTICE:?\s*This.{1,50}?contains.{1,50}?false.{1,50}?statements?.*?correct facts/i;
+const CORRECTION_NOTICE_REPLACE = /(“|")?CORRECTION NOTICE:?\s*This.{1,50}?contains.{1,50}?false.{1,50}?statements?.*?correct facts.{1,100}\[FACTUALLY_LINK\]\s*\.?\s*("|”)?/i;
 const GOV_LINK = "www.gov.sg/";
 
 const createPofmaTag = () => {
@@ -22,7 +22,7 @@ const createPofmaTag = () => {
   POFMA_TAG.style.lineHeight = "10pt";
   POFMA_TAG.style.cursor = "pointer";
   POFMA_TAG.style.outline = "none";
-  POFMA_TAG.setAttribute('title', 'Click to show POFMA Correction Notice')
+  POFMA_TAG.setAttribute("title", "Click to show POFMA Correction Notice");
 
   return POFMA_TAG;
 };
@@ -30,15 +30,16 @@ const createPofmaTag = () => {
 const findStartingNode = (thisNode: Node, endNode: Node): Node | null => {
   const { parentNode, previousSibling, nodeType, textContent } = thisNode;
 
-  console.log("Finding starting node", thisNode)
-
   if (!thisNode) return null;
 
   if (textContent && textContent.match(/CORRECTION NOTICE/i)) {
     let range = document.createRange();
     range.setStartBefore(thisNode);
     range.setEndAfter(endNode);
-    const match = CORRECTION_NOTICE_MATCH.exec(range.toString());
+
+    const str = range.toString();
+    const match = CORRECTION_NOTICE_MATCH.exec(str);
+
     if (match) {
       const offset = /(CORRECTION NOTICE)(?!.*\1).*/i.exec(textContent);
       thisNode.parentNode.insertBefore(
@@ -51,6 +52,7 @@ const findStartingNode = (thisNode: Node, endNode: Node): Node | null => {
   }
 
   if (previousSibling) return findStartingNode(previousSibling, endNode);
+
   if (parentNode) return findStartingNode(parentNode, endNode);
 
   return null;
@@ -64,14 +66,13 @@ const main = () => {
 };
 
 const handleLinkNodes = (linkNodes: NodeListOf<Element>) => {
-  if (!ENABLED)
-    return
-  
+  if (!ENABLED) return;
+
   linkNodes.forEach((linkNode) => {
-    console.log("handlingLinkNode");
     const startingNode = findStartingNode(linkNode, linkNode);
+
     if (!startingNode) return;
-    
+
     const tag = createPofmaTag();
     startingNode.parentElement.insertBefore(tag, startingNode);
 
@@ -87,7 +88,9 @@ const handleLinkNodes = (linkNodes: NodeListOf<Element>) => {
     selection.removeAllRanges();
 
     tag.addEventListener("click", () => {
-      notice.querySelector('a[href*="gov.sg"][href*="factually"]').setAttribute('data-unpofma', '')
+      notice
+        .querySelector('a[href*="gov.sg"][href*="factually"]')
+        .setAttribute("data-unpofma", "");
       tag.replaceWith(notice);
     });
   });
@@ -118,8 +121,8 @@ var observer = new MutationObserver((mutations) => {
         if (node.parentElement) {
           const linkNodes = node.parentElement.querySelectorAll(
             'a[href*="gov.sg"][href*="factually"]:not([data-unpofma])'
-          )
-          handleLinkNodes(linkNodes)
+          );
+          handleLinkNodes(linkNodes);
         }
       });
     }
